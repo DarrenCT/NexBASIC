@@ -1,6 +1,22 @@
 # Constants
 DIGITS = '0123456789'
 
+# Custom ERROR
+
+class Error:
+    def __init__(self, error_name, details):
+        self.error_name = error_name
+        self.details = details
+
+    def as_string(self):
+        result = f'{self.error_name}: {self.details}'
+        return result
+
+
+class IllegalCharError(Error):
+    def __init__(self, details):
+        super().__init__('Illegal Character', details)
+
 # TOKEN Class
 
 #Token types
@@ -65,7 +81,12 @@ class Lexer:
                 self.advance()
             else:
                 #return some error
-        return tokens
+                pos_start = self.pos.copy()
+                char = self.current_char
+                self.advance()
+                return [], IllegalCharError("'" + char + "'")
+
+        return tokens, None
     
     # Create numbers
     def make_number(self):
