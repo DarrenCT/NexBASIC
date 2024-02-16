@@ -182,16 +182,19 @@ def factor(self):
 
 
 def term(self):
-    left = self.factor()
+    return self.bin_op(self.factor, (TT_MUL, TT_DIV))
 
-    while self.current_tok in (TT_MUL, TT_DIV):
+def expr(self):
+    return self.bin_op(self.term, (TT_PLUS, TT_MINUS))
+
+def bin_op(self, func, ops):
+    left = func()
+
+    while self.current_tok in ops:
          op_tok = self.current_tok
-         right = self.factor
+         right = func()
          left = BinOpNode(left, op_tok, right)
     return left
-
-def expr():
-     pass
 
 # Run Function
 def run(fn, text):
