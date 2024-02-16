@@ -42,15 +42,15 @@ class Token:
 # LEXER Class
 
 class Lexer:
-    def __init__(self, fn, text):
-        self.fn = fn
+    def __init__(self, text):
         self.text = text
+        self.pos = -1
         self.current_char = None
         self.advance()
     
     def advance(self):
-        self.pos.advance(self.current_char)
-        self.current_char = self.text[self.pos.idx] if self.pos.idx < len(self.text) else None
+        self.pos += 1
+        self.current_char = self.text[self.pos] if self.pos < len(self.text) else None
 
     def make_tokens(self):
         # Empty list of tokens
@@ -81,7 +81,7 @@ class Lexer:
                 self.advance()
             else:
                 #return some error
-                pos_start = self.pos.copy()
+                pos_start = self.pos
                 char = self.current_char
                 self.advance()
                 return [], IllegalCharError("'" + char + "'")
@@ -108,3 +108,12 @@ class Lexer:
         #if there exists '.' treat as float
         else:
             return Token(TT_FLOAT, float(num_str))
+        
+    
+# Run Function
+        
+def run(text):
+    lexer = Lexer(text)
+    tokens, error = lexer.make_tokens()
+
+    return tokens, error
