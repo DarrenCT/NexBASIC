@@ -106,22 +106,22 @@ class Lexer:
 			elif self.current_char in DIGITS:
 				tokens.append(self.make_number())
 			elif self.current_char == '+':
-				tokens.append(Token(TT_PLUS))
+				tokens.append(Token(TT_PLUS), pos_start=self.pos)
 				self.advance()
 			elif self.current_char == '-':
-				tokens.append(Token(TT_MINUS))
+				tokens.append(Token(TT_MINUS), pos_start=self.pos)
 				self.advance()
 			elif self.current_char == '*':
-				tokens.append(Token(TT_MUL))
+				tokens.append(Token(TT_MUL), pos_start=self.pos)
 				self.advance()
 			elif self.current_char == '/':
-				tokens.append(Token(TT_DIV))
+				tokens.append(Token(TT_DIV), pos_start=self.pos)
 				self.advance()
 			elif self.current_char == '(':
-				tokens.append(Token(TT_LPAREN))
+				tokens.append(Token(TT_LPAREN), pos_start=self.pos)
 				self.advance()
 			elif self.current_char == ')':
-				tokens.append(Token(TT_RPAREN))
+				tokens.append(Token(TT_RPAREN), pos_start=self.pos)
 				self.advance()
 			else:
 				#return some error
@@ -136,6 +136,7 @@ class Lexer:
 	def make_number(self):
 		num_str = ''
 		dot_count = 0
+		pos_start = self.pos.copy()
 
 		while self.current_char != None and self.current_char in DIGITS + '.':
 			if self.current_char == '.':
@@ -148,10 +149,10 @@ class Lexer:
 		
 		#if there are not '.''s, treat as integer
 		if dot_count == 0:
-			return Token(TT_INT, int(num_str))
+			return Token(TT_INT, int(num_str), pos_start, self.pos)
 		#if there exists '.' treat as float
 		else:
-			return Token(TT_FLOAT, float(num_str))
+			return Token(TT_FLOAT, float(num_str), pos_start, self.pos)
 		
 	
 # Nodes Class for parser
@@ -215,8 +216,10 @@ class Parser:
 		tok = self.current_tok
 		# check to see of number is int or float
 		if tok.type in (TT_INT, TT_FLOAT):
-			self.advance()
-			return NumberNode(tok)
+			res.register(self.advance())
+			return res.success(NumberNode(tok))
+		
+		return res.failure(InvalidSyntaxError(tok.pos_start, tok.pos_end, "Expected int or float"))
 
 	def term(self):
 		return self.bin_op(self.factor, (TT_MUL, TT_DIV))
@@ -225,13 +228,17 @@ class Parser:
 		return self.bin_op(self.term, (TT_PLUS, TT_MINUS))
 
 	def bin_op(self, func, ops):
-		left = func()
+		res = ParseResult()
+		left = res.register(func())
+		if res.error: return res
+
 		while self.current_tok.type in ops:
 			op_tok = self.current_tok
-			self.advance()
-			right = func()
+			res.register(self.advance())
+			right = res.register(func())
+			if res.error: return res
 			left = BinOpNode(left, op_tok, right)
-		return left
+		return res.success(left)
 
 
 # Run Function
