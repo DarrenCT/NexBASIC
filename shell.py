@@ -1,3 +1,8 @@
+import nexBASIC
+
 while True:
-    text = input('NexBASIC > ')
-    print(text)
+    text = input('nexBASIC > ')
+    result, error = nexBASIC.run(text)
+
+    if error: print(error.as_string())
+    else: print(result)
